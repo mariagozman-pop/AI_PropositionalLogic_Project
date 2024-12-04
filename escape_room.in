@@ -12,9 +12,12 @@ door(door2).
 connects(door1, room1, room2).
 connects(door2, room2, exit).
 
+open(door1):-false.
+open(door2):-false.
 % Define keys
 key(key1).
 key(key2).
+
 opens(key1, door1).
 opens(key2, door2).
 
@@ -46,4 +49,4 @@ contains(room2, trap1).
 all X all Y all A all B (door(Y) & connects(Y, A, B) & open(Y) & at(X, A) -> can_move(X, A, B)).
 
 % Opening doors
-all X all Y all K (has(X, K) & opens(K, Y) -> open(Y)).
+all X all Y all K (has(X, K) & opens(K, Y) & action_open_door(X, Y) -> open(Y)).
