@@ -1,0 +1,9 @@
+formulas(assumptions).
+at(player,room1).
+has(player,key1).
+has(player,key1).
+end_of_list.
+
+formulas(goals).
+open(door1).
+end_of_list.

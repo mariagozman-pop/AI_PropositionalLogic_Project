@@ -1,5 +1,4 @@
 import subprocess
-import sys
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 
@@ -19,9 +18,10 @@ class EscapeRoomGame(tk.Tk):
         self.disarmed_traps = []
         self.items_in_rooms = {
             'room1': ['puzzle1'],
-            'room2': ['puzzle2', 'trap1']
+            'room2': ['puzzle2', 'trap1'],
         }
-        self.prover9_file = 'escape_room.in'
+        self.prover9_path = '/path/to/prover9'  # Replace with the correct path to the prover9 executable
+        self.current_state_file = 'current_state.in'
 
         # GUI Elements
         self.create_widgets()
@@ -59,46 +59,34 @@ class EscapeRoomGame(tk.Tk):
         # Update the display with the initial state
         self.update_display()
 
-    def write_prover9_input(self, goal_statements, additional_facts=None):
-       with open('current_state.in', 'w') as f:
-        # Place the include directive at the top
-        f.write('% Include game rules from escape_room.in\n')
-        f.write(f'include "{self.prover9_file}".\n\n')
+    def write_current_state(self, goal_statements=None):
+        with open(self.current_state_file, 'w') as f:
+            f.write('formulas(assumptions).\n')
+            f.write(f'at({self.player},{self.current_room}).\n')
+            for item in self.inventory:
+                f.write(f'has({self.player},{item}).\n')
+            for puzzle in self.solved_puzzles:
+                f.write(f'solved({self.player},{puzzle}).\n')
+            for door in self.open_doors:
+                f.write(f'open({door}).\n')
+            for trap in self.disarmed_traps:
+                f.write(f'disarmed({trap}).\n')
+            f.write('end_of_list.\n\n')
 
-        f.write('formulas(assumptions).\n')
-        f.write('% Current Game State\n')
-        # Player's current location
-        f.write(f'at({self.player},{self.current_room}).\n')
-        # Player's inventory
-        for item in self.inventory:
-            f.write(f'has({self.player},{item}).\n')
-        # Solved puzzles
-        for puzzle in self.solved_puzzles:
-            f.write(f'solved({self.player},{puzzle}).\n')
-        # Open doors
-        for door in self.open_doors:
-            f.write(f'open({door}).\n')
-        # Disarmed traps
-        for trap in self.disarmed_traps:
-            f.write(f'disarmed({trap}).\n')
-        # Include additional facts if any
-        if additional_facts:
-            for fact in additional_facts:
-                f.write(f'{fact}.\n')
-        f.write('end_of_list.\n\n')
+            if goal_statements:
+                f.write('formulas(goals).\n')
+                for goal in goal_statements:
+                    f.write(f'{goal}.\n')
+                f.write('end_of_list.\n')
 
-        f.write('formulas(goals).\n')
-        # Write goal statements
-        for goal in goal_statements:
-            f.write(f'{goal}.\n')
-        f.write('end_of_list.\n')
-
-    def run_prover9(self):
-        result = subprocess.run(['/mnt/c/Users/Calina/Desktop/ANUL3/AI/Lab6 again/LADR-2009-11A/bin/prover9', '-f', 'current_state.in'], stdout=subprocess.PIPE, text=True)
-        output = result.stdout
-        if 'THEOREM PROVED' in output:
-            return True
-        else:
+    def run_prover9(self, goal_statements):
+        self.write_current_state(goal_statements)
+        try:
+            result = subprocess.run(['/mnt/c/Users/Calina/Desktop/ANUL3/AI/Lab6 again/LADR-2009-11A/bin/prover9', '-f', self.current_state_file], stdout=subprocess.PIPE, text=True)
+            output = result.stdout
+            return 'THEOREM PROVED' in output
+        except FileNotFoundError:
+            messagebox.showerror("Error", "Prover9 executable not found. Please check the path.")
             return False
 
     def update_display(self):
@@ -106,192 +94,59 @@ class EscapeRoomGame(tk.Tk):
         self.display_text.insert(tk.END, f"Current Location: {self.current_room}\n")
         self.display_text.insert(tk.END, f"Inventory: {', '.join(self.inventory) if self.inventory else 'Empty'}\n\n")
 
-        available_actions = ["Available actions:"]
-        available_actions.append("Look Around")
-        puzzles_in_room = [item for item in self.items_in_rooms.get(self.current_room, []) if item.startswith('puzzle')]
-        if puzzles_in_room:
-            available_actions.append("Solve Puzzle")
-            self.solve_button.config(state=tk.NORMAL)
-        else:
-            self.solve_button.config(state=tk.DISABLED)
-        if any(door in self.doors_connected_to_current_room() and door not in self.open_doors for door in self.doors_connected_to_current_room()):
-            available_actions.append("Open Door")
-            self.open_button.config(state=tk.NORMAL)
-        else:
-            self.open_button.config(state=tk.DISABLED)
-        if any(door in self.open_doors for door in self.doors_connected_to_current_room()):
-            available_actions.append("Move to Another Room")
-            self.move_button.config(state=tk.NORMAL)
-        else:
-            self.move_button.config(state=tk.DISABLED)
-        traps_in_room = [item for item in self.items_in_rooms.get(self.current_room, []) if item.startswith('trap')]
-        if traps_in_room:
-            available_actions.append("Disarm Trap")
-            self.disarm_button.config(state=tk.NORMAL)
-            # Add warning about trap
-            self.display_text.insert(tk.END, "Warning: There is a trap here!\n")
-        else:
-            self.disarm_button.config(state=tk.DISABLED)
-
-        self.display_text.insert(tk.END, "\n".join(available_actions))
-
     def look_around(self):
         items = self.items_in_rooms.get(self.current_room, [])
         if items:
-            message = f"You see the following items: {', '.join(items)}"
+            message = f"You look around and see: {', '.join(items)}."
         else:
-            message = "There is nothing interesting here."
+            message = "You look around but see nothing interesting."
         messagebox.showinfo("Look Around", message)
 
     def solve_puzzle(self):
-        puzzles_in_room = [item for item in self.items_in_rooms.get(self.current_room, []) if item.startswith('puzzle')]
-        if puzzles_in_room:
-            if len(puzzles_in_room) > 1:
-                puzzle_to_solve = simpledialog.askstring("Solve Puzzle", f"Which puzzle do you want to solve? ({', '.join(puzzles_in_room)})")
-                if puzzle_to_solve not in puzzles_in_room:
-                    messagebox.showwarning("Solve Puzzle", "Invalid puzzle.")
-                    return
-            else:
-                puzzle_to_solve = puzzles_in_room[0]
-
-            if puzzle_to_solve == 'puzzle1':
-                # Present the riddle for puzzle1
-                riddle = "I speak without a mouth and hear without ears. I have nobody, but I come alive with wind. What am I?"
-                answer = simpledialog.askstring("Riddle Puzzle", riddle)
-                if answer and answer.strip().lower() == "echo":
-                    self.solved_puzzles.append('puzzle1')
-                    self.items_in_rooms[self.current_room].remove('puzzle1')
-                    # Record that the player provided the correct answer
-                    self.write_prover9_input([f'correct_answer({self.player},puzzle1)'])
-                    # Check if you now have key1
-                    self.write_prover9_input([f'has({self.player},key1)'])
-                    if self.run_prover9():
-                        self.inventory.append('key1')
-                        messagebox.showinfo("Solve Puzzle", "Correct! You obtained key1.")
-                    else:
-                        messagebox.showinfo("Solve Puzzle", "You solved the puzzle but didn't get anything.")
-                    self.update_display()
-                else:
-                    messagebox.showwarning("Riddle Puzzle", "Incorrect answer. Try again later.")
-            elif puzzle_to_solve == 'puzzle2':
-                # Present the riddle for puzzle2
-                riddle = "I am not alive, but I grow. I don't have lungs, but I need air. What am I?"
-                answer = simpledialog.askstring("Riddle Puzzle", riddle)
-                if answer and answer.strip().lower() == "fire":
-                    self.solved_puzzles.append('puzzle2')
-                    self.items_in_rooms[self.current_room].remove('puzzle2')
-                    # Record that the player provided the correct answer
-                    self.write_prover9_input([f'correct_answer({self.player},puzzle2)'])
-                    # Check if you now have key2
-                    self.write_prover9_input([f'has({self.player},key2)'])
-                    if self.run_prover9():
-                        self.inventory.append('key2')
-                        messagebox.showinfo("Solve Puzzle", "Correct! You obtained key2.")
-                    else:
-                        messagebox.showinfo("Solve Puzzle", "You solved the puzzle but didn't get anything.")
-                    self.update_display()
-                else:
-                    messagebox.showwarning("Riddle Puzzle", "Incorrect answer. Try again later.")
+        riddle = "I speak without a mouth and hear without ears. What am I?"
+        answer = simpledialog.askstring("Solve Puzzle", riddle)
+        if answer and answer.lower() == "echo":
+            self.inventory.append('key1')
+            self.update_display()
+            messagebox.showinfo("Puzzle Solved", "You solved the puzzle and found a key!")
         else:
-            messagebox.showwarning("Solve Puzzle", "There is no puzzle to solve here.")
+            messagebox.showwarning("Puzzle", "Wrong answer. Try again later.")
 
     def open_door(self):
-        # Check which doors are connected to the current room and not yet open
-        doors_to_open = [door for door in self.doors_connected_to_current_room() if door not in self.open_doors]
-        if doors_to_open:
-            if len(doors_to_open) > 1:
-                door_to_open = simpledialog.askstring("Open Door", f"Which door do you want to open? ({', '.join(doors_to_open)})")
-                if door_to_open not in doors_to_open:
-                    messagebox.showwarning("Open Door", "Invalid door.")
-                    return
-            else:
-                door_to_open = doors_to_open[0]
-            # Check if you can open the door
-            self.write_prover9_input([f'open({door_to_open})'])
-            if self.run_prover9():
-                self.open_doors.append(door_to_open)
-                messagebox.showinfo("Open Door", f"You opened {door_to_open}.")
-                self.update_display()
-            else:
-                messagebox.showwarning("Open Door", "You cannot open the door. Maybe you need a key.")
+        if self.run_prover9([f'open(door1)']):
+            self.open_doors.append('door1')
+            self.update_display()
+            messagebox.showinfo("Door Opened", "You opened the door to the next room!")
         else:
-            messagebox.showwarning("Open Door", "There is no door to open here.")
+            messagebox.showwarning("Door", "The door is locked. You may need a key.")
 
     def move_to_room(self):
-        # Check which rooms are accessible
-        accessible_rooms = []
-        for door in self.doors_connected_to_current_room():
-            if door in self.open_doors:
-                connected_rooms = self.get_connected_rooms(door)
-                next_room = [room for room in connected_rooms if room != self.current_room][0]
-                accessible_rooms.append(next_room)
-        if accessible_rooms:
-            if len(accessible_rooms) > 1:
-                target_room = simpledialog.askstring("Move", f"Which room do you want to move to? ({', '.join(accessible_rooms)})")
-                if target_room not in accessible_rooms:
-                    messagebox.showwarning("Move", "Invalid room.")
-                    return
-            else:
-                target_room = accessible_rooms[0]
-            # Check if you can move to the selected room
-            self.write_prover9_input([f'can_move({self.player},{self.current_room},{target_room})'])
-            if self.run_prover9():
-                self.current_room = target_room
-                messagebox.showinfo("Move", f"You moved to {self.current_room}.")
-                if self.current_room == 'exit':
-                    messagebox.showinfo("Congratulations!", "You have successfully escaped the room!")
-                    self.exit_game()
-                else:
-                    self.update_display()
-            else:
-                messagebox.showwarning("Move", "You cannot move to that room.")
+        if 'door1' in self.open_doors:
+            self.current_room = 'room2'
+            self.update_display()
+            messagebox.showinfo("Move", "You moved to room2.")
         else:
-            messagebox.showwarning("Move", "There is no accessible room to move to.")
+            messagebox.showwarning("Move", "The door is locked.")
 
     def disarm_trap(self):
-        traps_in_room = [item for item in self.items_in_rooms.get(self.current_room, []) if item.startswith('trap')]
-        if traps_in_room:
-            trap_to_disarm = traps_in_room[0]  # Assuming only one trap per room
-            self.write_prover9_input([f'disarmed({trap_to_disarm})'])
-            if self.run_prover9():
-                self.disarmed_traps.append(trap_to_disarm)
-                self.items_in_rooms[self.current_room].remove(trap_to_disarm)
-                messagebox.showinfo("Disarm Trap", f"You disarmed {trap_to_disarm}.")
+        if 'key1' in self.inventory:
+            if self.run_prover9([f'disarmed(trap1)']):
+                self.disarmed_traps.append('trap1')
                 self.update_display()
+                messagebox.showinfo("Trap Disarmed", "You disarmed the trap!")
             else:
-                messagebox.showwarning("Disarm Trap", "You cannot disarm the trap. Maybe you need an item.")
+                messagebox.showwarning("Trap", "The trap cannot be disarmed.")
         else:
-            messagebox.showwarning("Disarm Trap", "There is no trap to disarm here.")
+            messagebox.showwarning("Trap", "You need a key to disarm this trap.")
 
     def check_safety(self):
-        # Check if the room is safe
-        self.write_prover9_input([f'safe({self.player},{self.current_room})'])
-        if self.run_prover9():
-            messagebox.showinfo("Check Safety", "The room is safe.")
+        if self.run_prover9([f'safe({self.player},{self.current_room})']):
+            messagebox.showinfo("Safety", "The room is safe.")
         else:
-            messagebox.showinfo("Check Safety", "The room is not safe.")
+            messagebox.showwarning("Safety", "The room is not safe!")
 
     def exit_game(self):
         self.destroy()
-
-    def doors_connected_to_current_room(self):
-        # Returns a list of doors connected to the current room
-        doors = []
-        if self.current_room == 'room1':
-            doors.append('door1')
-        elif self.current_room == 'room2':
-            doors.append('door1')
-            doors.append('door2')
-        return doors
-
-    def get_connected_rooms(self, door):
-        # Returns the rooms connected by the specified door
-        if door == 'door1':
-            return ['room1', 'room2']
-        elif door == 'door2':
-            return ['room2', 'exit']
-        else:
-            return []
 
 if __name__ == '__main__':
     game = EscapeRoomGame()
