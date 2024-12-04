@@ -37,7 +37,7 @@ class EscapeRoomGame(tk.Tk):
         self.look_button = tk.Button(button_frame, text="Look Around", command=self.look_around)
         self.look_button.grid(row=0, column=0, padx=5, pady=5)
 
-        self.solve_button = tk.Button(button_frame, text="Solve Puzzle", command=self.solve_puzzle)
+        self.solve_button = tk.Button(button_frame, text="Solve Puzzle", command=self.solve_puzzle, state=tk.DISABLED)
         self.solve_button.grid(row=0, column=1, padx=5, pady=5)
 
         self.open_button = tk.Button(button_frame, text="Open Door", command=self.open_door)
@@ -124,80 +124,95 @@ class EscapeRoomGame(tk.Tk):
         self.display_text.insert(tk.END, f"Current Location: {self.current_room}\n")
         self.display_text.insert(tk.END, f"Inventory: {', '.join(self.inventory) if self.inventory else 'Empty'}\n")
 
+
     def look_around(self):
+        # Check items in the current room
         items = self.items_in_rooms.get(self.current_room, [])
-        if items:
-            messagebox.showinfo("Look Around", f"You see: {', '.join(items)}.")
-        else:
-            messagebox.showinfo("Look Around", "There is nothing of interest here.")
-
     
-    def get_puzzle_riddle(self, puzzle):
-     """Return the riddle and answer for a given puzzle."""
-     if puzzle == 'puzzle1':
-        return "I speak without a mouth and hear without ears. What am I?", "echo"
-     elif puzzle == 'puzzle2':
-        return "I am not alive, but I grow. I don’t have lungs, but I need air. What am I?", "fire"
-     return None, None  # Return None if no riddle is found
+        # Filter out traps and only show puzzles
+        puzzle_items = [item for item in items if item.startswith('puzzle')]
+    
+        # If there are puzzle items, show them and enable the button
+        if puzzle_items:
+            self.puzzle_seen = True  # Mark the puzzle as seen
+            self.solve_button.config(state=tk.NORMAL)  # Enable the "Solve Puzzle" button
+            messagebox.showinfo("Look Around", f"You see: {', '.join(puzzle_items)}.")
+        
+            # Update Prover9 state to reflect that the puzzle has been seen
+            self.run_prover9([f'seen({self.player}, {puzzle_items[0]})'])  # Assume the first puzzle is seen
+        else:
+            self.puzzle_seen = False  # No puzzle, button should be disabled
+            self.solve_button.config(state=tk.DISABLED)  # Disable the "Solve Puzzle" button
+            messagebox.showinfo("Look Around", "There is no puzzle here.")
 
+
+
+    def get_puzzle_riddle(self, puzzle):
+        """Return the riddle and answer for a given puzzle."""
+        if puzzle == 'puzzle1':
+            return "I speak without a mouth and hear without ears. What am I?", "echo"
+        elif puzzle == 'puzzle2':
+            return "I am not alive, but I grow. I don’t have lungs, but I need air. What am I?", "fire"
+        return None, None  # Return None if no riddle is found
 
 
     def solve_puzzle(self):
-     """Present a riddle and attempt to solve the puzzle."""
-     puzzles = [item for item in self.items_in_rooms.get(self.current_room, []) if item.startswith('puzzle')]
-     if not puzzles:
-        messagebox.showwarning("No Puzzle", "There is no puzzle to solve here.")
-        return
+        """Present a riddle and attempt to solve the puzzle."""
+        if not self.puzzle_seen:
+            messagebox.showwarning("Puzzle", "You need to look around first to see the puzzle!")
+            return
 
-     puzzle = puzzles[0]  # Get the first puzzle in the room
-     riddle, answer = self.get_puzzle_riddle(puzzle)
+        puzzles = [item for item in self.items_in_rooms.get(self.current_room, []) if item.startswith('puzzle')]
+        if not puzzles:
+            messagebox.showwarning("No Puzzle", "There is no puzzle to solve here.")
+            return
 
-    # Present the riddle to the player
-     player_answer = simpledialog.askstring("Solve Puzzle", riddle)
-     if player_answer and player_answer.strip().lower() == answer:
-        # Update the game state if the answer is correct
-        self.solved_puzzles.append(puzzle)
-        self.items_in_rooms[self.current_room].remove(puzzle)
-        self.run_prover9([f'solved({self.player},{puzzle})'])  # Validate with Prover9
+        puzzle = puzzles[0]  # Get the first puzzle in the room
+        riddle, answer = self.get_puzzle_riddle(puzzle)
 
-        # Grant the corresponding key
-        if puzzle == 'puzzle1':
-            self.inventory.append('key1')
-        elif puzzle == 'puzzle2':
-            self.inventory.append('key2')
+        # Present the riddle to the player
+        player_answer = simpledialog.askstring("Solve Puzzle", riddle)
+        if player_answer and player_answer.strip().lower() == answer:
+            # Update the game state if the answer is correct
+            self.solved_puzzles.append(puzzle)
+            self.items_in_rooms[self.current_room].remove(puzzle)
+            self.run_prover9([f'solved({self.player},{puzzle})'])  # Validate with Prover9
 
-        self.update_display()
-        messagebox.showinfo("Puzzle Solved", f"You solved {puzzle} and found a key!")
-     else:
-        messagebox.showwarning("Puzzle", "Wrong answer. Try again later.")
+            # Grant the corresponding key
+            if puzzle == 'puzzle1':
+                self.inventory.append('key1')
+            elif puzzle == 'puzzle2':
+                self.inventory.append('key2')
 
-
+            self.update_display()
+            messagebox.showinfo("Puzzle Solved", f"You solved {puzzle} and found a key!")
+        else:
+            messagebox.showwarning("Puzzle", "Wrong answer. Try again later.")
 
     def open_door(self):
-     door = 'door1' if self.current_room == 'room1' else 'door2'
-     key_required = 'key1' if door == 'door1' else 'key2'
+        door = 'door1' if self.current_room == 'room1' else 'door2'
+        key_required = 'key1' if door == 'door1' else 'key2'
 
-     if key_required in self.inventory:
-        # Add the action to the game state
-        self.actions = [f'action_open_door({self.player},{door})']
+        if key_required in self.inventory:
+            # Add the action to the game state
+            self.actions = [f'action_open_door({self.player},{door})']
 
-        if self.run_prover9([f'open({door})']):
-            if door not in self.open_doors:
-                self.open_doors.append(door)
-            self.update_display()
-            messagebox.showinfo("Door Opened", f"You opened {door}!")
+            if self.run_prover9([f'open({door})']):
+                if door not in self.open_doors:
+                    self.open_doors.append(door)
+                self.update_display()
+                messagebox.showinfo("Door Opened", f"You opened {door}!")
+            else:
+                messagebox.showwarning("Door Locked", "You cannot open this door.")
+            # Clear actions after processing
+            self.actions = []
         else:
-            messagebox.showwarning("Door Locked", "You cannot open this door.")
-        # Clear actions after processing
-        self.actions = []
-     else:
-        messagebox.showwarning("No Key", f"You need {key_required} to open {door}.")
-
-
+            messagebox.showwarning("No Key", f"You need {key_required} to open {door}.")
 
 
     def move_to_room(self):
         target_room = 'room2' if self.current_room == 'room1' else 'exit'
+        self.solve_button.config(state=tk.DISABLED)  
         if self.run_prover9([f'can_move({self.player},{self.current_room},{target_room})']):
             self.current_room = target_room
             self.update_display()
@@ -223,7 +238,6 @@ class EscapeRoomGame(tk.Tk):
             messagebox.showinfo("Safety", "The room is safe.")
         else:
             messagebox.showwarning("Safety", "The room is not safe!")
-
 
 
     def exit_game(self):
