@@ -1,6 +1,3 @@
-% escape_room.in
-% First-Order Logic for the Escape Room Game
-
 % Define rooms
 room(room1).
 room(room2).
@@ -14,6 +11,7 @@ connects(door2, room2, exit).
 
 open(door1):-false.
 open(door2):-false.
+
 % Define keys
 key(key1).
 key(key2).
@@ -32,13 +30,18 @@ all X (solved(X, puzzle1) -> has(X, key1)).
 all X (correct_answer(X, puzzle2) -> solved(X, puzzle2)).
 all X (solved(X, puzzle2) -> has(X, key2)).
 
-% Define traps
-trap(trap1).
+% Trap associated with a room
+trap(room2, trap1).
+
+% Definitions for safety in specific rooms
+all X (at(X, room2) & disarmed(trap(room2, trap1)) -> safe(X, room2)).
+all X (at(X, room2) & not disarmed(trap(room2, trap1)) -> not safe(X, room2)).
+
 % Disarming trap1 makes room2 safe
-all X (disarmed(trap1) & at(X, room2) -> safe(X, room2)).
+all X (disarmed(trap(room2, trap1)) & at(X, room2) -> safe(X, room2)).
 
 % Disarming traps requires key2
-all X all Y (has(X, key2) & trap(Y) -> disarmed(Y)).
+all X all Y (has(X, key2) & trap(room2, Y) -> disarmed(Y)).
 
 % Initial item locations
 contains(room1, puzzle1).
