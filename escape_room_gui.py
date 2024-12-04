@@ -58,75 +58,55 @@ class EscapeRoomGame(tk.Tk):
         self.update_display()
 
     def write_current_state(self, goal_statements):
-        """Write the complete state and goals to the Prover9 input file."""
-        with open(self.current_state_file, 'w') as f:
-            f.write('formulas(assumptions).\n')
-            f.write('% Game Rules and Logic\n')
-        
-            # Include static rules from escape_room.in
-            f.write('room(room1).\nroom(room2).\nroom(exit).\n')
-            f.write('door(door1).\ndoor(door2).\n')
-            f.write('connects(door1, room1, room2).\nconnects(door2, room2, exit).\n')
-            f.write('key(key1).\nkey(key2).\n')
-            f.write('opens(key1, door1).\nopens(key2, door2).\n')
-            f.write('puzzle(puzzle1).\npuzzle(puzzle2).\n')
-            f.write('all X (correct_answer(X, puzzle1) -> solved(X, puzzle1)).\n')
-            f.write('all X (solved(X, puzzle1) -> has(X, key1)).\n')
-            f.write('all X (correct_answer(X, puzzle2) -> solved(X, puzzle2)).\n')
-            f.write('all X (solved(X, puzzle2) -> has(X, key2)).\n')
-        
-            # Trap associated with a room
-            f.write('trap(room2, trap1).\n')
+     """Write the complete state and goals to the Prover9 input file."""
+     with open(self.current_state_file, 'w') as f:
+        f.write('formulas(assumptions).\n')
+        f.write('% Game Rules and Logic\n')
+        # Include static rules
+        f.write('room(room1).\nroom(room2).\nroom(exit).\n')
+        f.write('door(door1).\ndoor(door2).\n')
+        f.write('connects(door1, room1, room2).\nconnects(door2, room2, exit).\n')
+        f.write('key(key1).\nkey(key2).\n')
+        f.write('opens(key1, door1).\nopens(key2, door2).\n')
+        f.write('puzzle(puzzle1).\npuzzle(puzzle2).\n')
+        f.write('all X (correct_answer(X, puzzle1) -> solved(X, puzzle1)).\n')
+        f.write('all X (solved(X, puzzle1) -> has(X, key1)).\n')
+        f.write('all X (correct_answer(X, puzzle2) -> solved(X, puzzle2)).\n')
+        f.write('all X (solved(X, puzzle2) -> has(X, key2)).\n')
+        f.write('trap(trap1).\n')
+        f.write('all X all Y (room(Y) & -trap_in_room(Y) -> safe(X, Y)).\n')
+        f.write('all X all Y (has(X, key2) & trap(Y) -> disarmed(Y)).\n')
+        f.write('all X all Y all A all B (door(Y) & connects(Y, A, B) & open(Y) & at(X, A) -> can_move(X, A, B)).\n')
+        f.write('all X all Y all K (has(X, K) & opens(K, Y) & action_open_door(X, Y) -> open(Y)).\n\n')
 
-            # Safety rules based on disarming traps in rooms
-            f.write('all X (at(X, room2) & disarmed(trap(room2, trap1)) -> safe(X, room2)).\n')
-            f.write('all X (at(X, room2) & not disarmed(trap(room2, trap1)) -> not safe(X, room2)).\n')
+        # Dynamic game state
+        f.write('% Current State\n')
+        f.write(f'at({self.player},{self.current_room}).\n')
+        for item in self.inventory:
+            f.write(f'has({self.player},{item}).\n')
+        for puzzle in self.solved_puzzles:
+            f.write(f'solved({self.player},{puzzle}).\n')
+        for door in self.open_doors:
+            f.write(f'open({door}).\n')
+        for trap in self.disarmed_traps:
+            f.write(f'disarmed({trap}).\n')
+        # Include trap_in_room facts
+        for room in self.rooms:
+            if 'trap1' in self.items_in_rooms.get(room, []):
+                f.write(f'trap_in_room({room}).\n')
+            else:
+                f.write(f'-trap_in_room({room}).\n')  # Explicitly state that the trap is not in the room
+        # Include any actions
+        if hasattr(self, 'actions'):
+            for action in self.actions:
+                f.write(f'{action}.\n')
+        f.write('end_of_list.\n\n')
 
-            # Disarming trap1 makes room2 safe
-            f.write('all X (disarmed(trap(room2, trap1)) & at(X, room2) -> safe(X, room2)).\n')
-
-            # Disarming traps requires key2
-            f.write('all X all Y (has(X, key2) & trap(room2, Y) -> disarmed(Y)).\n')
-
-            # Initial item locations
-            f.write('contains(room1, puzzle1).\n')
-            f.write('contains(room2, puzzle2).\n')
-            f.write('contains(room2, trap1).\n')
-
-            # Rules for moving between rooms
-            f.write('all X all Y all A all B (door(Y) & connects(Y, A, B) & open(Y) & at(X, A) -> can_move(X, A, B)).\n')
-
-            # Opening doors
-            f.write('all X all Y all K (has(X, K) & opens(K, Y) & action_open_door(X, Y) -> open(Y)).\n\n')
-
-            # Dynamic game state
-            f.write('% Current State\n')
-            f.write(f'at({self.player},{self.current_room}).\n')
-        
-            for item in self.inventory:
-                f.write(f'has({self.player},{item}).\n')
-        
-            for puzzle in self.solved_puzzles:
-                f.write(f'solved({self.player},{puzzle}).\n')
-        
-            for door in self.open_doors:
-                f.write(f'open({door}).\n')
-        
-            for trap in self.disarmed_traps:
-                f.write(f'disarmed({trap}).\n')
-        
-            # Include any actions
-            if hasattr(self, 'actions'):
-                for action in self.actions:
-                    f.write(f'{action}.\n')
-        
-            f.write('end_of_list.\n\n')
-
-            # Add goals
-            f.write('formulas(goals).\n')
-            for goal in goal_statements:
-                f.write(f'{goal}.\n')
-            f.write('end_of_list.\n')
+        # Add goals
+        f.write('formulas(goals).\n')
+        for goal in goal_statements:
+            f.write(f'{goal}.\n')
+        f.write('end_of_list.\n')
 
 
     def run_prover9(self, goal_statements):
@@ -160,6 +140,8 @@ class EscapeRoomGame(tk.Tk):
         return "I am not alive, but I grow. I don’t have lungs, but I need air. What am I?", "fire"
      return None, None  # Return None if no riddle is found
 
+
+
     def solve_puzzle(self):
      """Present a riddle and attempt to solve the puzzle."""
      puzzles = [item for item in self.items_in_rooms.get(self.current_room, []) if item.startswith('puzzle')]
@@ -189,6 +171,8 @@ class EscapeRoomGame(tk.Tk):
      else:
         messagebox.showwarning("Puzzle", "Wrong answer. Try again later.")
 
+
+
     def open_door(self):
      door = 'door1' if self.current_room == 'room1' else 'door2'
      key_required = 'key1' if door == 'door1' else 'key2'
@@ -210,6 +194,8 @@ class EscapeRoomGame(tk.Tk):
         messagebox.showwarning("No Key", f"You need {key_required} to open {door}.")
 
 
+
+
     def move_to_room(self):
         target_room = 'room2' if self.current_room == 'room1' else 'exit'
         if self.run_prover9([f'can_move({self.player},{self.current_room},{target_room})']):
@@ -219,31 +205,25 @@ class EscapeRoomGame(tk.Tk):
         else:
             messagebox.showwarning("Move", "You cannot move to that room.")
 
+
+
     def disarm_trap(self):
-        # Check if the trap is in the current room
-        if self.current_room == 'room2' and 'trap1' in self.items_in_rooms['room2']:
-            if self.run_prover9([f'disarmed(trap({self.current_room}, trap1))']):
-                self.disarmed_traps.append(f'trap({self.current_room}, trap1)')
-                self.items_in_rooms['room2'].remove('trap1')
-                self.update_display()
-                messagebox.showinfo("Trap Disarmed", f"You disarmed the trap in {self.current_room}!")
-            else:
-                messagebox.showwarning("Trap", "You cannot disarm this trap.")
+        if self.run_prover9([f'disarmed(trap1)']):
+            self.disarmed_traps.append('trap1')
+            self.items_in_rooms['room2'].remove('trap1')
+            self.update_display()
+            messagebox.showinfo("Trap Disarmed", "You disarmed the trap!")
+        else:
+            messagebox.showwarning("Trap", "You cannot disarm this trap.")
+
+
 
     def check_safety(self):
-        # Check if the current room has a trap
-        trap_in_room = f"trap({self.current_room}, trap1)" if self.current_room == 'room2' else None
-    
-        # If there's a trap in the current room, check if it's disarmed
-        if trap_in_room and trap_in_room not in self.disarmed_traps:
-            messagebox.showwarning("Safety", f"The room {self.current_room} is not safe! There is a trap!")
+        if self.run_prover9([f'safe({self.player},{self.current_room})']):
+            messagebox.showinfo("Safety", "The room is safe.")
         else:
-            # Otherwise, check if the room is safe
-            goal = f"safe({self.player},{self.current_room})"
-            if self.run_prover9([goal]):
-                messagebox.showinfo("Safety", f"The room {self.current_room} is safe.")
-            else:
-                messagebox.showwarning("Safety", f"The room {self.current_room} is not safe!")
+            messagebox.showwarning("Safety", "The room is not safe!")
+
 
 
     def exit_game(self):

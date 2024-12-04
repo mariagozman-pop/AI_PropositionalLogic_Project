@@ -17,19 +17,17 @@ all X (correct_answer(X, puzzle1) -> solved(X, puzzle1)).
 all X (solved(X, puzzle1) -> has(X, key1)).
 all X (correct_answer(X, puzzle2) -> solved(X, puzzle2)).
 all X (solved(X, puzzle2) -> has(X, key2)).
-trap(room2, trap1).
-all X (at(X, room2) & disarmed(trap(room2, trap1)) -> safe(X, room2)).
-all X (at(X, room2) & not disarmed(trap(room2, trap1)) -> not safe(X, room2)).
-all X (disarmed(trap(room2, trap1)) & at(X, room2) -> safe(X, room2)).
-all X all Y (has(X, key2) & trap(room2, Y) -> disarmed(Y)).
-contains(room1, puzzle1).
-contains(room2, puzzle2).
-contains(room2, trap1).
+trap(trap1).
+all X all Y (room(Y) & -trap_in_room(Y) -> safe(X, Y)).
+all X all Y (has(X, key2) & trap(Y) -> disarmed(Y)).
 all X all Y all A all B (door(Y) & connects(Y, A, B) & open(Y) & at(X, A) -> can_move(X, A, B)).
 all X all Y all K (has(X, K) & opens(K, Y) & action_open_door(X, Y) -> open(Y)).
 
 % Current State
 at(player,room1).
+-trap_in_room(room1).
+trap_in_room(room2).
+-trap_in_room(exit).
 end_of_list.
 
 formulas(goals).
