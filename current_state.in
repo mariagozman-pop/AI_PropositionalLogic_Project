@@ -26,10 +26,9 @@ all X all Y all K (has(X, K) & opens(K, Y) & action_open_door(X, Y) -> open(Y)).
 
 % Current State
 at(player,room1).
-solved(player,puzzle1).
 trap_in_room(room2, trap1).
 end_of_list.
 
 formulas(goals).
-solved(player,puzzle1).
+safe(player,room1).
 end_of_list.

@@ -612,8 +612,8 @@ class EscapeRoomGameScreen(tk.Frame):
         riddle = (
             "You are locked in a trap with no obvious way out. On the wall, there is a lever with a sign that reads:\n\n"
             "\"Pulling this lever will not free you unless the statement on the wall is false.\"\n\n"
-            "If the statement is true, pulling the lever may flood the room with poison gas or unleash venomous snakes.\n\n"
-            "Do you pull the lever?"
+            "If this lever does not free you, pulling it will flood the room with poison gas or unleash venomous snakes.\n\n"
+            "Be cautious! Do you pull the lever?"
         )
         options = ["Yes", "No"]
         correct_option = "Yes"  # "Yes" corresponds to "Pull the lever."
@@ -795,7 +795,7 @@ class EscapeRoomApp(tk.Tk):
             'room1': ['puzzle1'],
             'room2': ['puzzle2', 'trap1'],
         }
-        self.prover9_path = '/mnt/c/Users/Calina/Desktop/ANUL3/AI/Lab6 again/LADR-2009-11A/bin/prover9'  # Replace with the correct path to Prover9 executable
+        self.prover9_path = '/mnt/c/Users/Maria Gozman-Pop/OneDrive/Desktop/Semester1/AI/Lab6/LADR-2009-11A/LADR-2009-11A/bin/prover9'
         self.current_state_file = 'current_state.in'
         self.actions = []  # Initialize actions
 
