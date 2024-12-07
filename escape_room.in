@@ -1,73 +1,44 @@
-% ----------------------------
-% Room Definitions
-% ----------------------------
-formulas(assumptions).
-    room(room1).
-    room(room2).
-    room(exit).
+% Define rooms
+room(room1).
+room(room2).
+room(exit).
 
-% Door Definitions
-    door(door1).
-    door(door2).
-    connects(door1, room1, room2).
-    connects(door2, room2, exit).
+% Define doors
+door(door1).
+door(door2).
+connects(door1, room1, room2).
+connects(door2, room2, exit).
 
-% Key Definitions
-    key(key1).
-    key(key2).
-    opens(key1, door1).
-    opens(key2, door2).
+% Define keys
+key(key1).
+key(key2).
 
-% Puzzle Definitions
-    puzzle(puzzle1).
-    puzzle(puzzle2).
+opens(key1, door1).
+opens(key2, door2).
 
-% Traps
-    trap(trap1).
-    trap_in_room(room2, trap1).
-end_of_list.
+% Define puzzles
+puzzle(puzzle1).
+puzzle(puzzle2).
 
-% ----------------------------
-% Puzzle Solving & Key Logic
-% ----------------------------
-formulas(axioms).
-    % Solving puzzles grants keys
-    solved(player, puzzle1) <-> correct_answer(player, puzzle1).
-    solved(player, puzzle2) <-> correct_answer(player, puzzle2).
+% Solving puzzles grants keys
+(correct_answer(player, puzzle1) -> solved(player, puzzle1)).
+(solved(player, puzzle1) -> has(player, key1)).
 
-    % Players get keys after solving puzzles
-    has(player, key1) <- solved(player, puzzle1).
-    has(player, key2) <- solved(player, puzzle2).
+(correct_answer(player, puzzle2) -> solved(player, puzzle2)).
+(solved(player, puzzle2) -> has(player, key2)).
 
-% ----------------------------
-% Trap Disarming Logic
-% ----------------------------
-    % Trap is disarmed if the game states it is
-    disarmed(trap1) <-> trap_in_room(room2, trap1).
+% Define traps
+trap(trap1).
 
-% ----------------------------
-% Room Safety Definition
-% ----------------------------
-    safe(player, Y) <- 
-        room(Y) & 
-        ( -exists Z (trap_in_room(Y, Z)) |
-          all Z (trap_in_room(Y, Z) -> disarmed(Z))).
+% Trap presence in rooms
+trap_in_room(room2, trap1).
 
-% ----------------------------
-% Door and Movement Logic
-% ----------------------------
-    % Opening doors
-    open(Y) <- has(player, K) & opens(K, Y) & action_open_door(player, Y).
+safe(player, room1).
 
-    % Moving between rooms
-    can_move(player, A, B) <- 
-        door(D) & connects(D, A, B) & open(D) & at(player, A).
-end_of_list.
+% Rules for moving between rooms
+(can_move(player, A, B) :- door(Y), connects(Y, A, B), open(Y), at(player, A)).
 
-% ----------------------------
-% Goal
-% ----------------------------
-formulas(goals).
-    safe(player, room2).
-    can_move(player, room1, exit).
-end_of_list.
+% Opening doors
+(open(Y) :- has(player, K), opens(K, Y), action_open_door(player, Y)).
+
+disarmed(trap1) -> safe(player, room2).

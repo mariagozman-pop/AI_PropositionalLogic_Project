@@ -10,7 +10,7 @@ class TrapDialog(tk.Toplevel):
     def __init__(self, parent, riddle, options, correct_option, timeout=50):
         super().__init__(parent)
         self.title("Trap Activated!")
-        self.geometry("900x500")  # Increased window size
+        self.geometry("900x500")  
         self.resizable(False, False)
         self.correct_option = correct_option.lower()
         self.player_choice = None
@@ -19,31 +19,26 @@ class TrapDialog(tk.Toplevel):
         self.timer_running = True
         self.after_id = None
 
-        # Center the TrapDialog relative to the parent window
-        self.center_window(900, 500)  # Updated to match new size
+        self.center_window(900, 500) 
 
-        # Configure the grid
         self.grid_columnconfigure(0, weight=1)
 
-        # Riddle Label
         self.riddle_label = tk.Label(
             self,
             text=riddle,
-            wraplength=860,  # Adjusted wraplength for larger window
+            wraplength=860, 
             justify="center",
-            font=self.get_standard_font(14),  # Increased font size for readability
-            bg="#FFD1DC",  # Pastel Pink Background
-            fg="#333333"   # Dark Text for Contrast
+            font=self.get_standard_font(14),  
+            bg="#B4975A", 
+            fg="#3E2723"
         )
         self.riddle_label.grid(row=0, column=0, padx=20, pady=20, sticky="n")
 
-        # Options Frame
-        options_frame = tk.Frame(self, bg="#FFD1DC")
+        options_frame = tk.Frame(self, bg="#F5F5DC")
         options_frame.grid(row=1, column=0, padx=20, pady=20)
 
-        self.selected_option = tk.StringVar(value="")  # Initialize with no selection
+        self.selected_option = tk.StringVar(value="") 
 
-        # Create radio buttons for options
         for option in options:
             rb = tk.Radiobutton(
                 options_frame,
@@ -51,23 +46,23 @@ class TrapDialog(tk.Toplevel):
                 variable=self.selected_option,
                 value=option.lower(),
                 font=self.get_standard_font(12),
-                bg="#FFD1DC",
-                fg="#333333",
+                bg="#B4975A",  
+                fg="#3E2723", 
                 command=self.option_selected
             )
-            rb.pack(anchor="w", pady=5)  # Increased padding for better spacing
+            rb.pack(anchor="w", pady=5)
 
         # Submit Button
         self.submit_button = tk.Button(
             self,
             text="Submit",
             command=self.submit_choice,
-            bg="#AEC6CF",
-            fg="white",
-            font=self.get_standard_font(14),  # Increased font size for consistency
+            bg="#C5A55D", 
+            fg="black",
+            font=self.get_standard_font(14),
             width=20,
             height=2,
-            state=tk.DISABLED  # Initially disabled until an option is selected
+            state=tk.DISABLED 
         )
         self.submit_button.grid(row=2, column=0, pady=20)
 
@@ -76,7 +71,7 @@ class TrapDialog(tk.Toplevel):
             self,
             text=f"Time Remaining: {self.remaining_time} seconds",
             font=self.get_standard_font(12, italic=True),  # Increased font size
-            bg="#FFD1DC",
+            bg="#F5F5DC",
             fg="#333333"
         )
         self.timer_label.grid(row=3, column=0, pady=10)
@@ -84,7 +79,7 @@ class TrapDialog(tk.Toplevel):
         # Start the countdown
         self.update_timer()
 
-        # Handle window close (e.g., clicking the 'X' button)
+        # Handle window close
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def get_standard_font(self, size, italic=False):
@@ -93,7 +88,7 @@ class TrapDialog(tk.Toplevel):
         return ("DejaVu Sans", size, style)
 
     def center_window(self, width, height):
-        self.update_idletasks()  # Ensure window size is calculated
+        self.update_idletasks() 
         parent = self.master
         parent_x = parent.winfo_rootx()
         parent_y = parent.winfo_rooty()
@@ -123,18 +118,18 @@ class TrapDialog(tk.Toplevel):
 
     def submit_choice(self):
         if not self.timer_running:
-            return  # Prevent submission after timeout
+            return 
         self.player_choice = self.selected_option.get()
         self.timer_running = False
         if self.after_id:
-            self.after_cancel(self.after_id)  # Cancel any scheduled timer updates
+            self.after_cancel(self.after_id)  
         self.destroy()
 
     def on_close(self):
         if self.timer_running:
             self.timer_running = False
             if self.after_id:
-                self.after_cancel(self.after_id)  # Cancel any scheduled timer updates
+                self.after_cancel(self.after_id)
             messagebox.showwarning("Time's Up!", "You failed to answer in time. Game Over!")
             self.master.exit_game()
         self.destroy()
@@ -142,7 +137,7 @@ class TrapDialog(tk.Toplevel):
 
 class WelcomeScreen(tk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent, bg="#FFB3BA")  # Pastel Pink Background
+        super().__init__(parent, bg="#D4C1A0")  
         self.controller = controller
         self.create_widgets()
 
@@ -151,10 +146,10 @@ class WelcomeScreen(tk.Frame):
         title_label = tk.Label(
             self,
             text="Welcome to the Escape Room Game!",
-            font=self.get_standard_font(24),  # Increased font size
-            bg="#FFB3BA",
-            fg="#6B5B95",  # Darker Pastel Color for Text
-            wraplength=760,  # Adjusted wraplength
+            font=self.get_standard_font(24),  
+            bg="#C7A500",
+            fg="#5C4033",  
+            wraplength=760, 
             justify="center"
         )
         title_label.pack(pady=40)
@@ -164,7 +159,7 @@ class WelcomeScreen(tk.Frame):
             self,
             text="Start Game",
             font=self.get_standard_font(14),
-            bg="#AEC6CF",
+            bg="#8B5E3C",  
             fg="white",
             width=20,
             height=2,
@@ -177,7 +172,7 @@ class WelcomeScreen(tk.Frame):
             self,
             text="View Rules",
             font=self.get_standard_font(14),
-            bg="#AEC6CF",
+            bg="#8B5E3C",  
             fg="white",
             width=20,
             height=2,
@@ -190,7 +185,7 @@ class WelcomeScreen(tk.Frame):
             self,
             text="Exit",
             font=self.get_standard_font(14),
-            bg="#AEC6CF",
+            bg="#8B5E3C", 
             fg="white",
             width=20,
             height=2,
@@ -206,7 +201,7 @@ class WelcomeScreen(tk.Frame):
 
 class RulesScreen(tk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent, bg="#FFDFBA")  # Pastel Orange Background
+        super().__init__(parent, bg="#D4C1A0")
         self.controller = controller
         self.create_widgets()
 
@@ -216,8 +211,8 @@ class RulesScreen(tk.Frame):
             self,
             text="Game Rules",
             font=self.get_standard_font(20),
-            bg="#FFDFBA",
-            fg="#6B5B95"  # Darker Pastel Color for Text
+            bg="#C7A500",  
+            fg="#5C4033"  
         )
         rules_title.pack(pady=20)
 
@@ -241,8 +236,8 @@ class RulesScreen(tk.Frame):
             wraplength=760,
             justify="center",
             font=self.get_standard_font(14),
-            bg="#FFDFBA",
-            fg="#6B5B95"
+            bg="#D4C1A0",  
+            fg="#5C0433" 
         )
         rules_label.pack(padx=20, pady=10, fill="x", expand=False)
 
@@ -251,7 +246,7 @@ class RulesScreen(tk.Frame):
             self,
             text="Back to Welcome",
             font=self.get_standard_font(14),
-            bg="#AEC6CF",
+            bg="#8B5E3C",  
             fg="white",
             width=20,
             height=2,
@@ -267,7 +262,7 @@ class RulesScreen(tk.Frame):
 
 class GameMenu(tk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent, bg="#C7CEEA")  # Pastel Lavender Background
+        super().__init__(parent, bg="#D4C1A0")
         self.controller = controller
         self.create_widgets()
 
@@ -276,9 +271,9 @@ class GameMenu(tk.Frame):
         menu_title = tk.Label(
             self,
             text="Game Menu",
-            font=self.get_standard_font(28),  # Increased font size
-            bg="#C7CEEA",
-            fg="#6B5B95"  # Darker Pastel Color for Text
+            font=self.get_standard_font(28),  
+            bg="#C7A500", 
+            fg="#5C4033"
         )
         menu_title.pack(pady=30)
 
@@ -287,7 +282,7 @@ class GameMenu(tk.Frame):
             self,
             text="Start Escape Room",
             font=self.get_standard_font(16),
-            bg="#AEC6CF",
+            bg="#8B5E3C",  
             fg="white",
             width=25,
             height=2,
@@ -295,12 +290,12 @@ class GameMenu(tk.Frame):
         )
         start_game_button.pack(pady=15)
 
-        # Back to Welcome Button
+        #Back Button
         back_button = tk.Button(
             self,
             text="Back to Welcome",
             font=self.get_standard_font(16),
-            bg="#AEC6CF",
+            bg="#8B5E3C",  # Earthy Brown
             fg="white",
             width=25,
             height=2,
@@ -313,7 +308,7 @@ class GameMenu(tk.Frame):
             self,
             text="Exit",
             font=self.get_standard_font(16),
-            bg="#AEC6CF",
+            bg="#8B5E3C",  # Earthy Brown
             fg="white",
             width=25,
             height=2,
@@ -329,7 +324,7 @@ class GameMenu(tk.Frame):
 
 class EscapeRoomGameScreen(tk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent, bg="#C1E1C1")  # Pastel Green Background
+        super().__init__(parent, bg="#D4C1A0")
         self.controller = controller
         self.create_widgets()
 
@@ -338,8 +333,8 @@ class EscapeRoomGameScreen(tk.Frame):
         self.display_text = tk.Label(
             self,
             text="",
-            bg="#C1E1C1",  # Match frame background
-            fg="#333333",
+            bg="#D4C1A0",  # Light Beige
+            fg="#3E2723",  # Dark Brown Text
             font=self.get_standard_font(14),
             justify="left",
             anchor="nw",
@@ -351,12 +346,12 @@ class EscapeRoomGameScreen(tk.Frame):
         self.display_text.pack(pady=10, padx=20, fill="both", expand=True)
 
         # Button Frame
-        button_frame = tk.Frame(self, bg="#C1E1C1")
+        button_frame = tk.Frame(self, bg="#D4C1A0")
         button_frame.pack(pady=10)
 
-        # Uniform Button Style
-        button_bg = "#AEC6CF"  # Pastel Blue
-        button_fg = "white"
+        # Uniform Button Style 
+        button_bg = "#C5A55D"  
+        button_fg = "black"
         button_font = self.get_standard_font(14)
         button_width = 25
         button_height = 2
@@ -487,20 +482,12 @@ class EscapeRoomGameScreen(tk.Frame):
 
             f.write('all X all Y (room(Y) & (all Z (trap_in_room(Y, Z) -> disarmed(Z))) -> safe(X, Y)).\n')
 
-            # **Removed Key Dependency for Disarming Traps**
-            # Original Line:
-            # f.write('all X (has(X, key2) & trap_in_room(room2, trap1) -> disarmed(trap1)).\n')
-            # Updated Line: Disarming traps no longer requires key2
-            f.write('trap_in_room(room2, trap1) -> disarmed(trap1).\n')
-
-            # **Adjusted Implications to Reflect Removal of Key Requirement**
-            # Original Line:
-            # f.write('all X (disarmed(trap1) -> (has(X, key2) & trap_in_room(room2, trap1))).\n')
-            # Updated Line:
-            f.write('disarmed(trap1) -> trap_in_room(room2, trap1).\n')
-
             f.write('all X all Y all A all B (door(Y) & connects(Y, A, B) & open(Y) & at(X, A) -> can_move(X, A, B)).\n')
             f.write('all X all Y all K (has(X, K) & opens(K, Y) & action_open_door(X, Y) -> open(Y)).\n\n')
+            
+            f.write('safe(player, room1).\n')
+            
+            f.write('disarmed(trap1) -> safe(player, room2).')
 
             # Dynamic game state
             f.write('% Current State\n')
@@ -570,13 +557,9 @@ class EscapeRoomGameScreen(tk.Frame):
 
         # Enable or disable "Disarm Trap" button
         has_active_trap = any(item.startswith('trap') and item not in self.controller.disarmed_traps for item in items)
-        if has_active_trap:
-            self.disarm_button.config(state=tk.NORMAL)
-        else:
-            self.disarm_button.config(state=tk.DISABLED)
+        self.disarm_button.config(state=tk.DISABLED)
 
     def look_around(self):
-        # Check if there's a trap in the current room and it's not disarmed
         active_traps = [
             trap for trap in self.controller.items_in_rooms.get(self.controller.current_room, [])
             if trap.startswith('trap') and trap not in self.controller.disarmed_traps
@@ -587,23 +570,19 @@ class EscapeRoomGameScreen(tk.Frame):
                 self.handle_trap(trap)
             return
 
-        # Check items in the current room
         items = self.controller.items_in_rooms.get(self.controller.current_room, [])
 
-        # Filter out traps and only show puzzles
         puzzle_items = [item for item in items if item.startswith('puzzle')]
 
-        # If there are puzzle items, show them and enable the "Solve Puzzle" button
         if puzzle_items:
-            self.controller.puzzle_seen = True  # Mark the puzzle as seen
-            self.solve_button.config(state=tk.NORMAL)  # Enable the "Solve Puzzle" button
+            self.controller.puzzle_seen = True  
+            self.solve_button.config(state=tk.NORMAL) 
             messagebox.showinfo("Look Around", f"You see: {', '.join(puzzle_items)}.")
 
-            # Update Prover9 state to reflect that the puzzle has been seen
-            self.run_prover9([f'seen({self.controller.player}, {puzzle_items[0]})'])  # Assume the first puzzle is seen
+            self.run_prover9([f'seen({self.controller.player}, {puzzle_items[0]})']) 
         else:
-            self.controller.puzzle_seen = False  # No puzzle, button should be disabled
-            self.solve_button.config(state=tk.DISABLED)  # Disable the "Solve Puzzle" button
+            self.controller.puzzle_seen = False  
+            self.solve_button.config(state=tk.DISABLED)
             messagebox.showinfo("Look Around", "There is no puzzle here.")
 
     def handle_trap(self, trap):
@@ -712,7 +691,8 @@ class EscapeRoomGameScreen(tk.Frame):
             messagebox.showwarning("No Key", f"You need {key_required} to open {door}.")
 
     def move_to_room(self):
-        # Determine target room based on current location
+        self.controller.puzzle_seen = False  
+        
         if self.controller.current_room == 'room1':
             target_room = 'room2'
         elif self.controller.current_room == 'room2':
@@ -732,7 +712,6 @@ class EscapeRoomGameScreen(tk.Frame):
                 messagebox.showwarning("Move", "You cannot move to that room.")
             return
 
-        # "Open Door" and "Move to Another Room" remain enabled; no need to disable them
         if self.run_prover9([f'can_move({self.controller.player},{self.controller.current_room},{target_room})']):
             self.controller.current_room = target_room
             self.update_display()
@@ -749,7 +728,7 @@ class EscapeRoomGameScreen(tk.Frame):
         if active_traps:
             trap = active_traps[0]  # Assuming one trap per room for simplicity
             # Attempt to disarm the trap via Prover9
-            if self.run_prover9([f'disarmed({trap})']):
+            if self.run_prover9([f'trap_in_room(room2, trap1)']):
                 self.controller.disarmed_traps.append(trap)
                 self.controller.items_in_rooms[self.controller.current_room].remove(trap)
                 self.update_display()
@@ -769,10 +748,10 @@ class EscapeRoomGameScreen(tk.Frame):
         # Optional action; does not interfere with 'Look Around'
         if self.run_prover9([f'safe({self.controller.player},{self.controller.current_room})']):
             messagebox.showinfo("Safety", "The room is safe.")
-            # Optionally, you can set flags or update the display
         else:
             messagebox.showwarning("Safety", "The room is not safe! Be cautious.")
-            # Optionally, inform the player about the trap
+            self.disarm_button.config(state="normal")
+
 
 
 class EscapeRoomApp(tk.Tk):
@@ -800,7 +779,7 @@ class EscapeRoomApp(tk.Tk):
         self.actions = []  # Initialize actions
 
         # Container for all frames
-        container = tk.Frame(self, bg="#C1E1C1")  # Match frame background
+        container = tk.Frame(self, bg="#D2B48C")  # Match frame background
         container.grid(row=0, column=0, sticky="nsew")
 
         # Configure grid weights to allow container to expand
