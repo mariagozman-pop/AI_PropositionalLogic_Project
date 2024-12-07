@@ -18,8 +18,9 @@ all X (solved(X, puzzle1) -> has(X, key1)).
 all X (correct_answer(X, puzzle2) -> solved(X, puzzle2)).
 all X (solved(X, puzzle2) -> has(X, key2)).
 trap(trap1).
-all X all Y (room(Y) & -trap_in_room(Y) -> safe(X, Y)).
-all X all Y (has(X, key2) & trap(Y) -> disarmed(Y)).
+all X all Y (room(Y) & (all Z (trap_in_room(Y, Z) -> disarmed(Z))) -> safe(X, Y)).
+trap_in_room(room2, trap1) -> disarmed(trap1).
+disarmed(trap1) -> trap_in_room(room2, trap1).
 all X all Y all A all B (door(Y) & connects(Y, A, B) & open(Y) & at(X, A) -> can_move(X, A, B)).
 all X all Y all K (has(X, K) & opens(K, Y) & action_open_door(X, Y) -> open(Y)).
 
@@ -29,9 +30,7 @@ has(player,key1).
 solved(player,puzzle1).
 solved(player,puzzle2).
 open(door1).
--trap_in_room(room1).
-trap_in_room(room2).
--trap_in_room(exit).
+disarmed(trap1).
 end_of_list.
 
 formulas(goals).

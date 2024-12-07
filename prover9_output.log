@@ -1,0 +1,21 @@
+============================== Prover9 ===============================
+Prover9 (64) version 2009-11A, November 2009.
+Process 371 was started by calinaborzan on DESKTOP-N8P14C0,
+Fri Dec  6 16:49:07 2024
+The command was "/mnt/c/Users/Calina/Desktop/ANUL3/AI/Lab6 again/LADR-2009-11A/bin/prover9 -f current_state.in".
+============================== end of head ===========================
+
+============================== INPUT =================================
+
+% Reading from file current_state.in
+
+%%ERROR: A term cannot be constructed from the marked string:
+
+
+all X all Y (%%START ERROR%%room(Y) & not trap_active(Y) -> safe(X, Y)%%END ERROR%%).
+
+Fatal error:  sread_term error
+
+
+Fatal error:  sread_term error
+
